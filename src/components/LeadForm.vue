@@ -27,7 +27,7 @@ function validate() {
   if (!form.name.trim()) errors.name = t('form.required')
   if (form.phone.replace(/\D/g, '').length !== 12) errors.phone = t('form.phoneError')
   if (!form.direction) errors.direction = t('form.required')
-  if (!form.age || Number(form.age) < 3 || Number(form.age) > 99) errors.age = t('form.required')
+  if (!form.age || Number(form.age) < 3 || Number(form.age) > 99) errors.age = t('form.ageError')
   if (!form.consent) errors.consent = t('form.consentError')
   return !Object.keys(errors).length
 }
@@ -52,10 +52,11 @@ async function submit() {
 <template>
   <form class="lead-form" novalidate @submit.prevent="submit">
     <div class="honeypot" aria-hidden="true"><label for="lead-website">Website</label><input id="lead-website" v-model="form.website" type="text" tabindex="-1" autocomplete="off" /></div>
-    <div class="field"><label for="lead-name">{{ t('form.name') }}</label><input id="lead-name" v-model="form.name" autocomplete="name" :placeholder="t('form.namePlaceholder')" :aria-invalid="Boolean(errors.name)" /><small v-if="errors.name">{{ errors.name }}</small></div>
-    <div class="field"><label for="lead-phone">{{ t('form.phone') }}</label><input id="lead-phone" v-model="form.phone" inputmode="tel" autocomplete="tel" :aria-invalid="Boolean(errors.phone)" @input="maskPhone" /><small v-if="errors.phone">{{ errors.phone }}</small></div>
-    <div class="field"><label for="lead-direction">{{ t('form.direction') }}</label><select id="lead-direction" v-model="form.direction" :aria-invalid="Boolean(errors.direction)"><option value="" disabled>{{ t('form.choose') }}</option><option v-for="course in courses" :key="course.slug" :value="course.slug">{{ course.title }}</option></select><small v-if="errors.direction">{{ errors.direction }}</small></div>
-    <div class="field"><label for="lead-age">{{ t('form.age') }}</label><input id="lead-age" v-model="form.age" type="number" inputmode="numeric" min="3" max="99" :aria-invalid="Boolean(errors.age)" /><small v-if="errors.age">{{ errors.age }}</small></div>
+    <p class="required-note">{{ t('form.requiredHint') }}</p>
+    <div class="field"><label for="lead-name">{{ t('form.name') }} <span class="required-mark" aria-hidden="true">*</span></label><input id="lead-name" v-model="form.name" required autocomplete="name" :placeholder="t('form.namePlaceholder')" :aria-invalid="Boolean(errors.name)" /><small v-if="errors.name">{{ errors.name }}</small></div>
+    <div class="field"><label for="lead-phone">{{ t('form.phone') }} <span class="required-mark" aria-hidden="true">*</span></label><input id="lead-phone" v-model="form.phone" required inputmode="tel" autocomplete="tel" :aria-invalid="Boolean(errors.phone)" @input="maskPhone" /><small v-if="errors.phone">{{ errors.phone }}</small></div>
+    <div class="field"><label for="lead-direction">{{ t('form.direction') }} <span class="required-mark" aria-hidden="true">*</span></label><select id="lead-direction" v-model="form.direction" required :aria-invalid="Boolean(errors.direction)"><option value="" disabled>{{ t('form.choose') }}</option><option v-for="course in courses" :key="course.slug" :value="course.slug">{{ t(course.titleKey) }}</option></select><small v-if="errors.direction">{{ errors.direction }}</small></div>
+    <div class="field"><label for="lead-age">{{ t('form.age') }} <span class="required-mark" aria-hidden="true">*</span></label><input id="lead-age" v-model="form.age" required type="number" inputmode="numeric" min="3" max="99" :placeholder="t('form.agePlaceholder')" :aria-invalid="Boolean(errors.age)" /><small v-if="errors.age">{{ errors.age }}</small></div>
     <fieldset class="field language-field"><legend>{{ t('form.language') }}</legend><label><input v-model="form.language" type="radio" value="ru" />{{ t('form.russian') }}</label><label><input v-model="form.language" type="radio" value="uz" />{{ t('form.uzbek') }}</label></fieldset>
     <div class="field consent-field"><label><input v-model="form.consent" type="checkbox" /><span>{{ t('form.consent') }}</span></label><small v-if="errors.consent">{{ errors.consent }}</small></div>
     <button class="btn btn-primary submit-button" type="submit" :disabled="loading"><span>{{ loading ? t('form.sending') : t('form.submit') }}</span><ArrowRight /></button>

@@ -7,6 +7,7 @@ export const contact = {
   addressUz: 'Usta Umarqul Jo‘raqulov ko‘chasi, 133, 2–3-qavat',
   landmarkRu: 'напротив Янги Базара',
   landmarkUz: 'Yangi bozor ro‘parasida',
+  workingHours: '09:00–17:00',
   routeHref: 'https://www.google.com/maps/search/?api=1&query=Usta+Umarqul+Jo%27raqulov+133+Samarkand',
   instagram: '',
   coordinates: null,

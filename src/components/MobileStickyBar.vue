@@ -16,5 +16,5 @@ onBeforeUnmount(() => { window.removeEventListener('scroll', update); window.rem
 </script>
 
 <template>
-  <Transition name="sticky"><div v-if="visible" class="mobile-sticky" aria-label="Quick actions"><a :href="contact.phoneHref"><Phone />{{ t('mobileBar.call') }}</a><RouterLink to="/#consultation"><Send />{{ t('mobileBar.enroll') }}</RouterLink></div></Transition>
+  <Transition name="sticky"><div v-if="visible" class="mobile-sticky" :aria-label="t('mobileBar.label')"><a :href="contact.phoneHref"><Phone />{{ t('mobileBar.call') }}</a><RouterLink to="/#consultation"><Send />{{ t('mobileBar.enroll') }}</RouterLink></div></Transition>
 </template>

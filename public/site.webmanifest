@@ -1,0 +1,11 @@
+{
+  "name": "Universe Learning Center",
+  "short_name": "Universe",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F8F5",
+  "theme_color": "#064E4B",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

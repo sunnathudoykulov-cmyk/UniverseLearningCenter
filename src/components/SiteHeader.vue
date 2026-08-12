@@ -11,7 +11,7 @@ const { t } = useI18n()
 const open = ref(false)
 const closeButton = ref<HTMLButtonElement | null>(null)
 const links = [
-  ['nav.courses', '/courses'], ['nav.advantages', '/#advantages'], ['nav.teachers', '/#teachers'],
+  ['nav.courses', '/courses'], ['nav.advantages', '/#advantages'],
   ['nav.process', '/#process'], ['nav.faq', '/#faq'], ['nav.contacts', '/contacts'],
 ]
 function close() { open.value = false }

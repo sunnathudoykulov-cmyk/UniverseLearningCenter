@@ -4,6 +4,8 @@ import App from './App.vue'
 import { router } from './router'
 import { ru } from './locales/ru'
 import { uz } from './locales/uz'
+import '@fontsource-variable/manrope'
+import '@fontsource-variable/sora'
 import './styles.css'
 
 const savedLocale = localStorage.getItem('universe-locale')

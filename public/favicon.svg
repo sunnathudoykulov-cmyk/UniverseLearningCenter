@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#064E4B"/><circle cx="28" cy="34" r="11" fill="none" stroke="#fff" stroke-width="5"/><path d="M9 47c15-5 31-16 45-31" fill="none" stroke="#B6D653" stroke-width="5" stroke-linecap="round"/><circle cx="49" cy="20" r="5" fill="#B6D653"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Universe Learning Center">
+  <rect width="512" height="512" rx="112" fill="#064E4B"/>
+  <g fill="#FFFFFF" transform="translate(22 82) scale(1.13)">
+    <path d="M56.4 149C58 118 80 90 117 66C151 45 203 44 239 59C261 69 280 85 295.9 103L168 167.2C138 181 108 192 88 191C65 190 53 172 56.4 149Z"/>
+    <path d="M343.5 58C353 57 364 64 370 62.4C383 59 391 52 406.7 52C400 63 390 73 381.7 81C378 87 379 98 376 107.3C371 97 369 88 364.2 83C357 73 350 64 343.5 58Z"/>
+    <path d="M25.6 298L349 88.1C336 106 324 122 314.6 132C320 149 328 164 328.5 184C331 218 320 251 296.2 287C277 309 253 326 231 333.3L210 338.5C229 326 241 317 247.2 313C258 300 265 283 262.4 265C260 248 246 236 227 232.5C210 230 194 234 180 238.7L25.6 298Z"/>
+  </g>
+</svg>

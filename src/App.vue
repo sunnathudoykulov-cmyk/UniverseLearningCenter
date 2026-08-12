@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import MobileStickyBar from './components/MobileStickyBar.vue'
+import { courses } from './data/courses'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -12,25 +13,34 @@ const route = useRoute()
 watch([() => route.fullPath, locale], () => {
   const titleKey = String(route.meta.title || 'seo.homeTitle')
   const descriptionKey = String(route.meta.description || 'seo.homeDescription')
+  const selectedCourse = route.name === 'course' ? courses.find((item) => item.slug === route.params.slug) : undefined
+  const pageTitle = selectedCourse ? `${t(selectedCourse.titleKey)} — Universe Learning Center` : t(titleKey)
+  const pageDescription = selectedCourse ? t(selectedCourse.resultKey) : t(descriptionKey)
   document.documentElement.lang = locale.value
-  document.title = t(titleKey)
+  document.title = pageTitle
   let description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
   if (!description) { description = document.createElement('meta'); description.name = 'description'; document.head.append(description) }
-  description.content = t(descriptionKey)
+  description.content = pageDescription
   const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
   if (robots) robots.content = route.name === 'not-found' ? 'noindex, follow' : 'index, follow'
   let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
   if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.append(canonical) }
   canonical.href = `https://www.universesamcenter.uz${route.path}`
   const socialMeta: Record<string, string> = {
-    'og:title': t(titleKey),
-    'og:description': t(descriptionKey),
+    'og:title': pageTitle,
+    'og:description': pageDescription,
     'og:url': canonical.href,
     'og:locale': locale.value === 'ru' ? 'ru_RU' : 'uz_UZ',
   }
   Object.entries(socialMeta).forEach(([property, content]) => {
     let meta = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
     if (!meta) { meta = document.createElement('meta'); meta.setAttribute('property', property); document.head.append(meta) }
+    meta.content = content
+  })
+  const namedMeta: Record<string, string> = { 'twitter:title': pageTitle, 'twitter:description': pageDescription }
+  Object.entries(namedMeta).forEach(([name, content]) => {
+    let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
+    if (!meta) { meta = document.createElement('meta'); meta.name = name; document.head.append(meta) }
     meta.content = content
   })
   const payload = {
@@ -47,7 +57,7 @@ watch([() => route.fullPath, locale], () => {
 </script>
 
 <template>
-  <a href="#main" class="skip-link">Skip to content</a>
+  <a href="#main" class="skip-link">{{ t('common.skipToContent') }}</a>
   <SiteHeader />
   <main id="main"><RouterView /></main>
   <SiteFooter />

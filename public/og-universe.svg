@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Universe Learning Center — Samarqand">
+  <rect width="1200" height="630" fill="#064E4B"/>
+  <circle cx="1110" cy="40" r="210" fill="#B6D653"/>
+  <circle cx="1050" cy="560" r="240" fill="none" stroke="#B6D653" stroke-opacity=".24" stroke-width="2"/>
+  <circle cx="1050" cy="560" r="170" fill="none" stroke="#FFFFFF" stroke-opacity=".15" stroke-width="2"/>
+  <g fill="#FFFFFF" transform="translate(65 68) scale(.72)">
+    <path d="M100.92 172.697C102.195 148.001 119.717 125.696 149.186 106.577C176.265 89.848 217.681 89.051 246.354 101.001C263.876 108.967 279.009 121.713 291.673 136.052L189.805 187.195C165.911 198.188 142.018 206.951 126.088 206.155C107.77 205.358 98.212 191.019 100.92 172.697Z"/>
+    <path d="M329.584 100.204C337.15 99.407 345.911 104.984 350.69 103.709C361.044 101.001 367.416 95.424 379.92 95.424C374.584 104.187 366.619 112.153 360.009 118.526C357.062 123.306 357.858 132.069 355.469 139.477C351.487 131.272 349.894 124.103 346.071 120.12C340.336 112.153 334.761 104.984 329.584 100.204Z"/>
+    <path d="M76.389 291.393L333.965 124.182C323.611 138.442 314.053 151.188 306.566 159.154C310.867 172.697 317.239 184.646 317.637 200.578C319.628 227.663 310.867 253.952 291.912 282.63C276.619 300.156 257.504 313.699 239.982 319.514L223.257 323.656C238.389 313.699 247.947 306.529 252.885 303.342C261.487 292.986 267.062 279.444 264.991 265.105C263.08 251.562 251.929 242.003 236.796 239.214C223.257 237.223 210.513 240.409 199.363 244.154L76.389 291.393Z"/>
+  </g>
+  <text x="390" y="200" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="88" font-weight="700">UNIVERSE</text>
+  <text x="394" y="253" fill="#B6D653" font-family="Arial, sans-serif" font-size="28" font-weight="600" letter-spacing="7">LEARNING CENTER</text>
+  <text x="82" y="435" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="44" font-weight="700">Ваше будущее начинается здесь</text>
+  <text x="82" y="495" fill="#FFFFFF" fill-opacity=".74" font-family="Arial, sans-serif" font-size="25">Языки и IT • Самарканд</text>
+  <text x="82" y="546" fill="#B6D653" font-family="Arial, sans-serif" font-size="22" font-weight="700">universesamcenter.uz</text>
+</svg>
