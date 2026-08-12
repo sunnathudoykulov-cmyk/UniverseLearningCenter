@@ -19,6 +19,10 @@ export default [
     },
   },
   {
+    files: ['api/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parser: vueParser,

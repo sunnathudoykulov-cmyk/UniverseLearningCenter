@@ -17,12 +17,27 @@ watch([() => route.fullPath, locale], () => {
   let description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
   if (!description) { description = document.createElement('meta'); description.name = 'description'; document.head.append(description) }
   description.content = t(descriptionKey)
+  const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
+  if (robots) robots.content = route.name === 'not-found' ? 'noindex, follow' : 'index, follow'
   let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
   if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.append(canonical) }
-  canonical.href = `${window.location.origin}${route.path}`
+  canonical.href = `https://www.universesamcenter.uz${route.path}`
+  const socialMeta: Record<string, string> = {
+    'og:title': t(titleKey),
+    'og:description': t(descriptionKey),
+    'og:url': canonical.href,
+    'og:locale': locale.value === 'ru' ? 'ru_RU' : 'uz_UZ',
+  }
+  Object.entries(socialMeta).forEach(([property, content]) => {
+    let meta = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
+    if (!meta) { meta = document.createElement('meta'); meta.setAttribute('property', property); document.head.append(meta) }
+    meta.content = content
+  })
   const payload = {
     '@context': 'https://schema.org', '@type': ['EducationalOrganization', 'LocalBusiness'],
-    name: 'Universe Learning Center', telephone: '+998950376232',
+    '@id': 'https://www.universesamcenter.uz/#organization',
+    name: 'Universe Learning Center', url: 'https://www.universesamcenter.uz/', telephone: '+998950376232',
+    sameAs: ['https://t.me/UniverseLearningCenterBot'],
     address: { '@type': 'PostalAddress', streetAddress: locale.value === 'ru' ? 'Уста Умаркула Журакулова, 133, 2–3 этажи' : 'Usta Umarqul Jo‘raqulov ko‘chasi, 133, 2–3-qavat', addressLocality: 'Samarkand', addressCountry: 'UZ' },
   }
   let schema = document.querySelector<HTMLScriptElement>('#organization-schema')

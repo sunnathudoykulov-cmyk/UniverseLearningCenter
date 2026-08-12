@@ -5,10 +5,12 @@ import { useI18n } from 'vue-i18n'
 import { courses } from '../data/courses'
 import { contact } from '../data/contact'
 const { t } = useI18n()
-const endpoint = import.meta.env.VITE_LEAD_ENDPOINT
 const loading = ref(false)
-const status = ref<'idle' | 'unavailable' | 'error' | 'success'>('idle')
-const form = reactive({ name: '', phone: '+998 ', direction: '', age: '', language: 'ru', consent: false })
+const status = ref<'idle' | 'unavailable' | 'rateLimited' | 'error' | 'success'>('idle')
+const query = new URLSearchParams(window.location.search)
+const preselectedCourse = courses.some((course) => course.slug === query.get('course')) ? query.get('course') || '' : ''
+const preselectedLanguage = query.get('lang') === 'uz' ? 'uz' : 'ru'
+const form = reactive({ name: '', phone: '+998 ', direction: preselectedCourse, age: '', language: preselectedLanguage, consent: false, website: '' })
 const errors = reactive<Record<string, string>>({})
 const statusText = computed(() => status.value === 'idle' ? '' : t(`form.${status.value}`))
 
@@ -31,18 +33,25 @@ function validate() {
 }
 async function submit() {
   if (loading.value || !validate()) return
-  if (!endpoint) { status.value = 'unavailable'; return }
   loading.value = true; status.value = 'idle'
   try {
-    const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    const response = await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, source: `${window.location.pathname}${window.location.search}` }),
+    })
+    if (response.status === 429) { status.value = 'rateLimited'; return }
+    if (response.status === 503) { status.value = 'unavailable'; return }
     if (!response.ok) throw new Error('Request failed')
     status.value = 'success'
+    Object.assign(form, { name: '', phone: '+998 ', direction: '', age: '', consent: false, website: '' })
   } catch { status.value = 'error' } finally { loading.value = false }
 }
 </script>
 
 <template>
   <form class="lead-form" novalidate @submit.prevent="submit">
+    <div class="honeypot" aria-hidden="true"><label for="lead-website">Website</label><input id="lead-website" v-model="form.website" type="text" tabindex="-1" autocomplete="off" /></div>
     <div class="field"><label for="lead-name">{{ t('form.name') }}</label><input id="lead-name" v-model="form.name" autocomplete="name" :placeholder="t('form.namePlaceholder')" :aria-invalid="Boolean(errors.name)" /><small v-if="errors.name">{{ errors.name }}</small></div>
     <div class="field"><label for="lead-phone">{{ t('form.phone') }}</label><input id="lead-phone" v-model="form.phone" inputmode="tel" autocomplete="tel" :aria-invalid="Boolean(errors.phone)" @input="maskPhone" /><small v-if="errors.phone">{{ errors.phone }}</small></div>
     <div class="field"><label for="lead-direction">{{ t('form.direction') }}</label><select id="lead-direction" v-model="form.direction" :aria-invalid="Boolean(errors.direction)"><option value="" disabled>{{ t('form.choose') }}</option><option v-for="course in courses" :key="course.slug" :value="course.slug">{{ course.title }}</option></select><small v-if="errors.direction">{{ errors.direction }}</small></div>
@@ -50,7 +59,7 @@ async function submit() {
     <fieldset class="field language-field"><legend>{{ t('form.language') }}</legend><label><input v-model="form.language" type="radio" value="ru" />{{ t('form.russian') }}</label><label><input v-model="form.language" type="radio" value="uz" />{{ t('form.uzbek') }}</label></fieldset>
     <div class="field consent-field"><label><input v-model="form.consent" type="checkbox" /><span>{{ t('form.consent') }}</span></label><small v-if="errors.consent">{{ errors.consent }}</small></div>
     <button class="btn btn-primary submit-button" type="submit" :disabled="loading"><span>{{ loading ? t('form.sending') : t('form.submit') }}</span><ArrowRight /></button>
-    <p v-if="statusText" class="form-status" :class="`status-${status}`" role="status">{{ statusText }}</p>
+    <p v-if="statusText" class="form-status" :class="`status-${status}`" role="status" aria-live="polite">{{ statusText }}</p>
     <div class="form-alternatives"><a :href="contact.phoneHref"><Phone />{{ contact.phoneDisplay }}</a><a :href="contact.telegramHref" target="_blank" rel="noopener"><Send />{{ contact.telegramHandle }}</a></div>
   </form>
 </template>
