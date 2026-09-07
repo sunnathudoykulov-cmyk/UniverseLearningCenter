@@ -1,4 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { assistantFallback, generateAssistantReply } from './ai-assistant'
+import { defaultBotContent, getBotContent, type BotCourse, type BotLanguage } from './bot-content'
 
 const SITE_URL = 'https://www.universesamcenter.uz'
 const PHONE = '+998 95 037 62 32'
@@ -7,20 +9,45 @@ const ADDRESS = {
   uz: 'Samarqand, Usta Umarqul Jo‘raqulov ko‘chasi, 133, 2–3-qavat, Yangi bozor ro‘parasida.',
 }
 
-type Language = 'ru' | 'uz'
+type Language = BotLanguage
 type TelegramButton = { text: string; callback_data?: string; url?: string }
 type TelegramUpdate = {
-  message?: { chat: { id: number }; text?: string }
+  message?: {
+    chat: { id: number }
+    text?: string
+    from?: { first_name?: string; last_name?: string; username?: string; language_code?: string }
+  }
   callback_query?: { id: string; data?: string; message?: { chat: { id: number } } }
 }
 type RequestWithBody = IncomingMessage & { body?: unknown }
 
-const courses = [
-  { slug: 'general-english', ru: 'General English', uz: 'General English' },
-  { slug: 'ielts-cefr', ru: 'IELTS / CEFR', uz: 'IELTS / CEFR' },
-  { slug: 'russian', ru: 'Русский язык', uz: 'Rus tili' },
-  { slug: 'arabic', ru: 'Арабский язык', uz: 'Arab tili' },
-] as const
+const courses = defaultBotContent.courses
+
+function courseTitle(course: BotCourse, language: Language) {
+  return language === 'ru' ? course.titleRu : course.titleUz
+}
+
+function courseFacts(course: BotCourse, language: Language) {
+  const facts = language === 'ru'
+    ? [
+        course.price && `Стоимость: ${course.price}`,
+        course.schedule && `Расписание: ${course.schedule}`,
+        course.groups && `Группы: ${course.groups}`,
+        course.freeSeats && `Свободные места: ${course.freeSeats}`,
+      ]
+    : [
+        course.price && `Narxi: ${course.price}`,
+        course.schedule && `Jadval: ${course.schedule}`,
+        course.groups && `Guruhlar: ${course.groups}`,
+        course.freeSeats && `Bo‘sh joylar: ${course.freeSeats}`,
+      ]
+  const availableFacts = facts.filter(Boolean)
+  return availableFacts.length
+    ? availableFacts.join('\n')
+    : language === 'ru'
+      ? 'Актуальные группы, расписание, стоимость и свободные места подтвердит администратор.'
+      : 'Amaldagi guruhlar, jadval, narx va bo‘sh joylarni administrator tasdiqlaydi.'
+}
 
 function sendJson(response: ServerResponse, statusCode: number, payload: Record<string, unknown>) {
   response.statusCode = statusCode
@@ -52,11 +79,34 @@ function mainKeyboard(language: Language): TelegramButton[][] {
   ]
 }
 
-function courseKeyboard(language: Language): TelegramButton[][] {
+function courseKeyboard(language: Language, availableCourses = courses): TelegramButton[][] {
   return [
-    ...courses.map((course) => [{ text: course[language], callback_data: `course:${course.slug}:${language}` }]),
+    ...availableCourses.map((course) => [{ text: courseTitle(course, language), callback_data: `course:${course.slug}:${language}` }]),
     [{ text: language === 'ru' ? '← Главное меню' : '← Asosiy menyu', callback_data: `menu:${language}` }],
   ]
+}
+
+function leadFollowUpKeyboard(language: Language): TelegramButton[][] {
+  return [
+    [{ text: language === 'ru' ? '📚 Посмотреть другие курсы' : '📚 Boshqa kurslarni ko‘rish', callback_data: `courses:${language}` }],
+    [{ text: language === 'ru' ? '📍 Адрес и контакты' : '📍 Manzil va aloqa', callback_data: `contacts:${language}` }],
+    [{ text: language === 'ru' ? '🌐 Открыть сайт' : '🌐 Saytni ochish', url: SITE_URL }],
+  ]
+}
+
+export function parseLeadStart(text = '') {
+  const match = text.match(/^\/start(?:@\w+)?\s+lead_([a-z0-9-]+)_(ru|uz)$/i)
+  if (!match) return null
+  const course = courses.find((item) => item.slug === match[1].toLowerCase())
+  if (!course) return null
+  return { course, language: match[2].toLowerCase() as Language }
+}
+
+export function detectLanguage(text: string, telegramLanguage?: string): Language {
+  if (/[а-яё]/i.test(text)) return 'ru'
+  if (/\b(ru|russian|русский)\b/i.test(text)) return 'ru'
+  if (/\b(uz|uzbek|o['‘’]?zbek)\b/i.test(text)) return 'uz'
+  return telegramLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'uz'
 }
 
 export function buildEnrollmentUrl(course: string, language: Language) {
@@ -78,11 +128,11 @@ async function telegramRequest(method: string, body: Record<string, unknown>) {
   if (!response.ok || !result.ok) throw new Error('telegram_request_failed')
 }
 
-function sendMessage(chatId: number, text: string, keyboard?: TelegramButton[][]) {
+function sendMessage(chatId: number, text: string, keyboard?: TelegramButton[][], useHtml = true) {
   return telegramRequest('sendMessage', {
     chat_id: chatId,
     text,
-    parse_mode: 'HTML',
+    ...(useHtml ? { parse_mode: 'HTML' } : {}),
     disable_web_page_preview: true,
     ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {}),
   })
@@ -98,15 +148,16 @@ async function handleCallback(update: NonNullable<TelegramUpdate['callback_query
 
   if (action === 'lang' || action === 'menu') {
     const text = language === 'ru'
-      ? '<b>Universe Learning Center</b>\nВыберите нужный раздел:'
-      : '<b>Universe Learning Center</b>\nKerakli bo‘limni tanlang:'
+      ? '<b>Universe Learning Center</b>\nВыберите нужный раздел или напишите свой вопрос:'
+      : '<b>Universe Learning Center</b>\nKerakli bo‘limni tanlang yoki savolingizni yozing:'
     await sendMessage(chatId, text, mainKeyboard(language))
     return
   }
 
   if (action === 'trial' || action === 'courses') {
+    const content = await getBotContent()
     const text = language === 'ru' ? 'Выберите направление:' : 'Yo‘nalishni tanlang:'
-    await sendMessage(chatId, text, courseKeyboard(language))
+    await sendMessage(chatId, text, courseKeyboard(language, content.courses))
     return
   }
 
@@ -122,11 +173,12 @@ async function handleCallback(update: NonNullable<TelegramUpdate['callback_query
   }
 
   if (action === 'course') {
-    const course = courses.find((item) => item.slug === value)
+    const content = await getBotContent()
+    const course = content.courses.find((item) => item.slug === value)
     if (!course) return
     const text = language === 'ru'
-      ? `<b>${course.ru}</b>\nНажмите кнопку ниже — курс уже будет выбран в форме. После отправки администратор свяжется с вами.`
-      : `<b>${course.uz}</b>\nQuyidagi tugmani bosing — kurs arizada oldindan tanlanadi. Yuborganingizdan so‘ng administrator siz bilan bog‘lanadi.`
+      ? `<b>${course.titleRu}</b>\n${course.descriptionRu}\n\n${courseFacts(course, language)}`
+      : `<b>${course.titleUz}</b>\n${course.descriptionUz}\n\n${courseFacts(course, language)}`
     await sendMessage(chatId, text, [
       [{ text: language === 'ru' ? 'Заполнить заявку' : 'Arizani to‘ldirish', url: buildEnrollmentUrl(course.slug, language) }],
       [{ text: language === 'ru' ? '← Выбрать другой курс' : '← Boshqa kursni tanlash', callback_data: `courses:${language}` }],
@@ -142,11 +194,31 @@ export async function handleUpdate(update: TelegramUpdate) {
 
   const chatId = update.message?.chat.id
   if (!chatId) return
-  await sendMessage(
-    chatId,
-    '<b>Universe Learning Center</b>\nTilni tanlang / Выберите язык:',
-    languageKeyboard(),
-  )
+  const messageText = update.message?.text?.trim() || ''
+  const leadStart = parseLeadStart(messageText)
+  if (leadStart) {
+    const { course, language } = leadStart
+    const text = language === 'ru'
+      ? `<b>Здравствуйте! Это Universe Learning Center.</b>\n\nМы получили вашу заявку с сайта. Вы выбрали курс <b>${course.titleRu}</b>.\n${course.descriptionRu}\n\nАктуальную группу, время занятий и свободные места подтвердит администратор, когда свяжется с вами.`
+      : `<b>Assalomu alaykum! Bu Universe Learning Center.</b>\n\nSaytdagi arizangizni oldik. Siz <b>${course.titleUz}</b> kursini tanladingiz.\n${course.descriptionUz}\n\nAdministrator siz bilan bog‘langanda amaldagi guruh, dars vaqti va bo‘sh joylarni tasdiqlaydi.`
+    await sendMessage(chatId, text, leadFollowUpKeyboard(language))
+    return
+  }
+
+  if (!messageText || /^\/(start|menu)(?:@\w+)?$/i.test(messageText)) {
+    await sendMessage(chatId, '<b>Universe Learning Center</b>\nTilni tanlang / Выберите язык:', languageKeyboard())
+    return
+  }
+
+  const language = detectLanguage(messageText, update.message?.from?.language_code)
+  const content = await getBotContent()
+  let reply: string
+  try {
+    reply = await generateAssistantReply(messageText, language, content)
+  } catch {
+    reply = assistantFallback(language)
+  }
+  await sendMessage(chatId, reply, mainKeyboard(language), false)
 }
 
 export default async function handler(request: RequestWithBody, response: ServerResponse) {
