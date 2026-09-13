@@ -7,12 +7,19 @@ import { contact } from '../data/contact'
 const { t } = useI18n()
 const loading = ref(false)
 const status = ref<'idle' | 'unavailable' | 'rateLimited' | 'error' | 'success'>('idle')
+const submittedCourse = ref('')
+const submittedLanguage = ref<'ru' | 'uz'>('ru')
 const query = new URLSearchParams(window.location.search)
 const preselectedCourse = courses.some((course) => course.slug === query.get('course')) ? query.get('course') || '' : ''
 const preselectedLanguage = query.get('lang') === 'uz' ? 'uz' : 'ru'
 const form = reactive({ name: '', phone: '+998 ', direction: preselectedCourse, age: '', language: preselectedLanguage, consent: false, website: '' })
 const errors = reactive<Record<string, string>>({})
 const statusText = computed(() => status.value === 'idle' ? '' : t(`form.${status.value}`))
+const telegramFollowUpHref = computed(() => {
+  const course = submittedCourse.value
+  if (!course) return contact.telegramHref
+  return `${contact.telegramHref}?start=lead_${course}_${submittedLanguage.value}`
+})
 
 function maskPhone(event: Event) {
   const input = event.target as HTMLInputElement
@@ -43,6 +50,8 @@ async function submit() {
     if (response.status === 429) { status.value = 'rateLimited'; return }
     if (response.status === 503) { status.value = 'unavailable'; return }
     if (!response.ok) throw new Error('Request failed')
+    submittedCourse.value = form.direction
+    submittedLanguage.value = form.language === 'uz' ? 'uz' : 'ru'
     status.value = 'success'
     Object.assign(form, { name: '', phone: '+998 ', direction: '', age: '', consent: false, website: '' })
   } catch { status.value = 'error' } finally { loading.value = false }
@@ -61,6 +70,7 @@ async function submit() {
     <div class="field consent-field"><label><input v-model="form.consent" type="checkbox" /><span>{{ t('form.consent') }}</span></label><small v-if="errors.consent">{{ errors.consent }}</small></div>
     <button class="btn btn-primary submit-button" type="submit" :disabled="loading"><span>{{ loading ? t('form.sending') : t('form.submit') }}</span><ArrowRight /></button>
     <p v-if="statusText" class="form-status" :class="`status-${status}`" role="status" aria-live="polite">{{ statusText }}</p>
+    <a v-if="status === 'success'" class="btn telegram-follow-up" :href="telegramFollowUpHref" target="_blank" rel="noopener"><Send /><span>{{ t('form.telegramFollowUp') }}</span></a>
     <div class="form-alternatives"><a :href="contact.phoneHref"><Phone />{{ contact.phoneDisplay }}</a><a :href="contact.telegramHref" target="_blank" rel="noopener"><Send />{{ contact.telegramHandle }}</a></div>
   </form>
 </template>
